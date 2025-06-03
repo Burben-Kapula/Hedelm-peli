@@ -195,11 +195,11 @@
     let locks = [false, false, false, false];
     let images = ["images/apple.jpg", "images/pear.jpg", "images/cherry.jpg", "images/watermelon.jpg", "images/seven.png"];
     let multipliers = {
-      "apple.jpg": 2,
-      "pear.jpg": 4,
-      "cherry.jpg": 6,
-      "watermelon.jpg": 8,
-      "seven.png": 10
+      "seven.png": 10,      // 4x 7
+      "apple.jpg": 6,       // 4x omena
+      "watermelon.jpg": 5,  // 4x meloni
+      "pear.jpg": 4,        // 4x päärynä
+      "cherry.jpg": 3       // 4x kirsikka
     };
 
     const moneyText = document.querySelector("#player_money");
@@ -241,18 +241,16 @@
     }
 
     function rollSlots() {
-      if (playerMoney <= 0 && betAmount === 0) {
-        alertText.innerText = "You have no money!";
-        return;
-      }
-
       if (betAmount === 0) {
         alertText.innerText = "Please place a bet!";
         return;
       }
+      if (playerMoney < betAmount) {
+        alertText.innerText = "Not enough money!";
+        return;
+      }
 
       let results = [];
-
       for (let i = 0; i < 4; i++) {
         if (!locks[i]) {
           let rnd = Math.floor(Math.random() * images.length);
@@ -261,18 +259,27 @@
         results.push(slots[i].src.split("/").pop());
       }
 
-      // Win condition: all the same
+      // Vähennetään panos vasta nyt
+      playerMoney -= betAmount;
+
+      let winnings = 0;
+      // 4 samaa
       if (results.every((val) => val === results[0])) {
-        let winMultiplier = multipliers[results[0]];
-        let winnings = winMultiplier * betAmount;
-        playerMoney += winnings;
+        winnings = multipliers[results[0]] * betAmount;
         alertText.innerText = "You won: " + winnings + "€!";
-      } else {
+      }
+      // 3 seiskaa
+      else if (results.filter(x => x === "seven.png").length === 3) {
+        winnings = 5 * betAmount;
+        alertText.innerText = "You won: " + winnings + "€ (3x 7)!";
+      }
+      else {
         alertText.innerText = "You lost: " + betAmount + "€.";
       }
 
+      playerMoney += winnings;
       betAmount = 0;
-      // Скидаємо всі локи після гри
+      // Säädetään lukot pois päältä
       locks = [false, false, false, false];
       for (let i = 1; i <= 4; i++) {
         document.getElementById("lock" + i).innerText = "LOCK";
@@ -281,8 +288,7 @@
 
       updateDisplay();
     }
-
-    document.querySelector("#bet_btn1").onclick = () => addBet(10);
+        document.querySelector("#bet_btn1").onclick = () => addBet(10);
     document.querySelector("#bet_btn2").onclick = () => addBet(50);
     document.querySelector("#bet_btn3").onclick = () => addBet(100);
     document.querySelector("#roll_btn").onclick = rollSlots;
